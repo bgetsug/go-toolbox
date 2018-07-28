@@ -3,3 +3,4 @@ Gopkg.lock
 .cover
 .idea
 _exclude/
+coverage.txt
