@@ -13,7 +13,7 @@ import (
 )
 
 var (
-	indexerLog               = logging.NewModuleLog(Couchbase, "indexer")
+	indexerLog               = logging.NewModuleLog(couchbase, "indexer")
 	errorNoRegisteredIndexes = errors.New("NO_REGISTERED_INDEXES", "No indexes have been registered for creation")
 )
 
@@ -32,12 +32,12 @@ type Index struct {
 }
 
 // Register one or more indexes
-func (c *DB) RegisterIndexes(indexes []*Index) {
+func (c *Couchbase) RegisterIndexes(indexes []*Index) {
 	c.indexes = indexes
 }
 
 // Create all registered indexes that do not already exist
-func (c *DB) CreateIndexes() ([]gocb.IndexInfo, []error) {
+func (c *Couchbase) CreateIndexes() ([]gocb.IndexInfo, []error) {
 	indexErrors := c.createIndexesOnAllHosts()
 
 	indexes, err := c.Bucket.Manager("", "").GetIndexes()
@@ -53,7 +53,7 @@ func (c *DB) CreateIndexes() ([]gocb.IndexInfo, []error) {
 	return indexes, indexErrors
 }
 
-func (c *DB) createIndexesOnAllHosts() []error {
+func (c *Couchbase) createIndexesOnAllHosts() []error {
 	hosts := strings.Split(c.config.Hosts, ",")
 
 	var indexErrors []error
@@ -80,7 +80,7 @@ func (c *DB) createIndexesOnAllHosts() []error {
 	return indexErrors
 }
 
-func (c *DB) createIndex(index *Index, node string, ignoreIfExists bool) error {
+func (c *Couchbase) createIndex(index *Index, node string, ignoreIfExists bool) error {
 	nodeParts := strings.Split(strings.Split(node, ":")[0], ".")
 	name := fmt.Sprintf("%s_%s", index.Name, nodeParts[0])
 

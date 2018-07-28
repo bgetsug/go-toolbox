@@ -8,12 +8,12 @@ import (
 
 var CbChecker *Checker
 
-func InitChecker(cb *DB) {
+func InitChecker(cb *Couchbase) {
 	CbChecker = &Checker{cb}
 }
 
 type Checker struct {
-	cb *DB
+	cb *Couchbase
 }
 
 func (c *Checker) Check() health.Health {

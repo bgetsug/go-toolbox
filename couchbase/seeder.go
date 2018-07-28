@@ -8,7 +8,7 @@ import (
 )
 
 var (
-	seederLog = logging.NewModuleLog(Couchbase, "seeder")
+	seederLog = logging.NewModuleLog(couchbase, "seeder")
 )
 
 var SeedCmd = &cobra.Command{
@@ -28,15 +28,15 @@ func NewSeederResults(seeds []interface{}, errs []error) SeederResults {
 	return SeederResults{Seeds: seeds, Errors: errs}
 }
 
-type SeedFunc func(cb *DB) SeederResults
+type SeedFunc func(cb *Couchbase) SeederResults
 
 // Register one or more seeders
-func (c *DB) RegisterSeeders(seeders []SeedFunc) {
+func (c *Couchbase) RegisterSeeders(seeders []SeedFunc) {
 	c.seeders = seeders
 }
 
 // Flush and seed the Couchbase bucket with all registered seeders
-func (c *DB) Seed(seederResults chan<- SeederResults) {
+func (c *Couchbase) Seed(seederResults chan<- SeederResults) {
 	env := c.config.Environment
 
 	if env != config.DEVELOPMENT && env != config.LOCAL && env != config.TESTING {

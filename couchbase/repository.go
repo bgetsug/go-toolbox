@@ -6,7 +6,7 @@ import (
 )
 
 type Repository struct {
-	Cb          *DB
+	Cb          *Couchbase
 	BucketIdent *nqb.Expression
 }
 

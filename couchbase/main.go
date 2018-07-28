@@ -15,11 +15,11 @@ import (
 	"gopkg.in/couchbase/gocbcore.v7"
 )
 
-const Couchbase = "couchbase"
+const couchbase = "couchbase"
 
 var (
-	log = logging.NewModuleLog(Couchbase)
-	Cb  *DB
+	log = logging.NewModuleLog(couchbase)
+	Cb  *Couchbase
 )
 
 type Configuration struct {
@@ -32,14 +32,14 @@ type Configuration struct {
 
 // Init sets up a new Couchbase cluster and bucket connection, and health check.
 // If logger is not nil, the Debug and DebugVerbose fields of the Configuration will be ignored.
-func Init(configuration Configuration, logger gocbcore.Logger) {
-	Cb = &DB{config: configuration, logger: logger, consistencyMode: gocb.NotBounded}
+func InitCb(configuration Configuration, logger gocbcore.Logger) {
+	Cb = &Couchbase{config: configuration, logger: logger, consistencyMode: gocb.NotBounded}
 	Cb.Connect()
 	InitChecker(Cb)
 }
 
-// DB store information about the DB
-type DB struct {
+// Couchbase store information about the Couchbase
+type Couchbase struct {
 	*gocb.Bucket
 	config          Configuration
 	cluster         *gocb.Cluster
@@ -51,7 +51,7 @@ type DB struct {
 }
 
 // Connect initializes a bucket connection
-func (c *DB) Connect() {
+func (c *Couchbase) Connect() {
 	if c.logger != nil {
 		gocbcore.SetLogger(c.logger)
 	}
@@ -86,26 +86,26 @@ func (c *DB) Connect() {
 		}
 
 		if c.connectRetries >= maxConnectRetries {
-			log.With("error", errors.WithStack(bucketError)).Panic("Max DB connection retries reached")
+			log.With("error", errors.WithStack(bucketError)).Panic("Max Couchbase connection retries reached")
 		}
 	}
 
 	c.Bucket = bucket
 }
 
-func (c *DB) ConsistencyMode() gocb.ConsistencyMode {
+func (c *Couchbase) ConsistencyMode() gocb.ConsistencyMode {
 	return c.consistencyMode
 }
 
-func (c *DB) SetConsistencyMode(mode gocb.ConsistencyMode) {
+func (c *Couchbase) SetConsistencyMode(mode gocb.ConsistencyMode) {
 	c.consistencyMode = mode
 }
 
-func (c *DB) ResetConsistencyMode() {
+func (c *Couchbase) ResetConsistencyMode() {
 	c.consistencyMode = gocb.NotBounded
 }
 
-func (c *DB) WaitForHealth() error {
+func (c *Couchbase) WaitForHealth() error {
 	hosts := strings.Split(c.config.Hosts, ",")
 
 	client := &http.Client{}
