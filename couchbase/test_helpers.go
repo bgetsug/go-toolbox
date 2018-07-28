@@ -45,6 +45,7 @@ func (d *BucketFlush) WaitForNodeHealth() error {
 
 	client := &http.Client{}
 	req, err := http.NewRequest(http.MethodGet, "http://"+hosts[0]+":8091/pools/default", nil)
+	req.SetBasicAuth(Cb.config.BucketName, Cb.config.BucketPassword)
 
 	if err != nil {
 		return err
