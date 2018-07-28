@@ -7,7 +7,6 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/bgetsug/go-toolbox/logging"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"gopkg.in/gavv/httpexpect.v1"
@@ -67,8 +66,6 @@ func (d *CaptureLogsJSON) newZap(w io.Writer) {
 		zap.Development(),
 	)
 
-	logging.Logger = logger
-	logging.Log = logging.Logger.Sugar()
 	zap.ReplaceGlobals(logger)
 }
 
