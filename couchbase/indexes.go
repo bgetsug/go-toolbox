@@ -40,7 +40,7 @@ func (c *Couchbase) RegisterIndexes(indexes []*Index) {
 func (c *Couchbase) CreateIndexes() ([]gocb.IndexInfo, []error) {
 	indexErrors := c.createIndexesOnAllHosts()
 
-	indexes, err := c.Bucket.Manager("", "").GetIndexes()
+	indexes, err := c.Bucket.Manager(Cb.config.BucketName, Cb.config.BucketPassword).GetIndexes()
 
 	if err != nil {
 		indexErrors = append(indexErrors, err)
