@@ -110,6 +110,7 @@ func (c *Couchbase) WaitForHealth() error {
 
 	client := &http.Client{}
 	req, err := http.NewRequest(http.MethodGet, "http://"+hosts[0]+":8091/pools/default/buckets/"+c.config.BucketName, nil)
+	req.SetBasicAuth(Cb.config.BucketName, Cb.config.BucketPassword)
 
 	if err != nil {
 		return err
@@ -141,7 +142,7 @@ GetStatus:
 
 		for _, node := range bucket.Nodes {
 			if node["status"] != "healthy" {
-				seederLog.With("node", node["hostname"]).Warn("Cluster not yet healthy. Waiting...")
+				log.With("node", node["hostname"]).Warn("Cluster not yet healthy. Waiting...")
 				time.Sleep(2 * time.Second)
 				continue GetStatus
 			}
