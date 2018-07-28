@@ -11,6 +11,14 @@ import (
 	"gopkg.in/go-playground/validator.v9"
 )
 
+const (
+	BindFailedMsg          = "Failed to bind data from the request body. Is it empty?"
+	JSONUnmarshalFailedMsg = "Failed to decode JSON."
+	JSONSyntaxErrorMsg     = "There was an error in the JSON syntax."
+	UnknownMsg             = "An unknown error occurred."
+	RecoveredFromPanicMsg  = "Recovered from panic"
+)
+
 // A middleware that outputs errors in a standard format.
 func ErrorResponder() gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -27,17 +35,23 @@ func ErrorResponder() gin.HandlerFunc {
 		var errorCollection []interface{}
 
 		for _, contextError := range c.Errors {
-			if validationErrors, ok := contextError.Err.(validator.ValidationErrors); ok {
+
+			if contextError.IsType(gin.ErrorTypeBind) {
+				errorCollection = append(errorCollection, gin.H{
+					"message": BindFailedMsg,
+					"code":    BindFailedCode,
+				})
+			} else if validationErrors, ok := contextError.Err.(validator.ValidationErrors); ok {
 				errorCollection = handleValidationErrors(errorCollection, validationErrors)
 			} else if _, ok := contextError.Err.(*json.UnmarshalTypeError); ok {
 				errorCollection = append(errorCollection, gin.H{
-					"message": "Failed to parse JSON.",
-					"code":    JSONUnmarshalFailed,
+					"message": JSONUnmarshalFailedMsg,
+					"code":    JSONUnmarshalFailedCode,
 				})
 			} else if _, ok := contextError.Err.(*json.SyntaxError); ok {
 				errorCollection = append(errorCollection, gin.H{
-					"message": "There was an error in the JSON syntax.",
-					"code":    JSONDecodingFailed,
+					"message": JSONSyntaxErrorMsg,
+					"code":    JSONSyntaxErrorCode,
 				})
 			} else if errWithCode, ok := contextError.Err.(Error); ok {
 				errorCollection = append(errorCollection, gin.H{
@@ -46,8 +60,8 @@ func ErrorResponder() gin.HandlerFunc {
 				})
 			} else {
 				errorCollection = append(errorCollection, gin.H{
-					"message": "An unknown error occurred.",
-					"code":    Unknown,
+					"message": UnknownMsg,
+					"code":    UnknownCode,
 				})
 			}
 		}
@@ -63,7 +77,7 @@ func handleValidationErrors(errorCollection []interface{}, validationErrors vali
 	for _, validationError := range validationErrors {
 		errorCollection = append(errorCollection, gin.H{
 			"message": validationError.Translate(validation.Translator),
-			"code":    ValidationFailed,
+			"code":    ValidationFailedCode,
 		})
 	}
 
@@ -71,7 +85,7 @@ func handleValidationErrors(errorCollection []interface{}, validationErrors vali
 }
 
 func RecoveryHandler(c *gin.Context, err interface{}) {
-	AbortWithServerError(c, Wrap(errors.New(err), PanicRecovery, "Recovered from panic"))
+	AbortWithServerError(c, Wrap(errors.New(err), PanicRecoveryCode, RecoveredFromPanicMsg))
 }
 
 // A convenience function that calls AbortWithError with a Bad Request (400) status.

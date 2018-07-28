@@ -9,13 +9,14 @@ import (
 type Code string
 
 const (
-	JSONUnmarshalFailed Code = "JSON_UNMARSHAL_FAILED"
-	JSONDecodingFailed  Code = "JSON_DECODING_FAILED"
+	BindFailedCode          Code = "BIND_FAILED"
+	JSONUnmarshalFailedCode Code = "JSON_UNMARSHAL_FAILED"
+	JSONSyntaxErrorCode     Code = "JSON_SYNTAX_ERROR"
 
-	Unknown Code = "UNKNOWN"
+	UnknownCode Code = "UNKNOWN"
 
-	ValidationFailed Code = "VALIDATION_FAILED"
-	PanicRecovery    Code = "PANIC_RECOVERY"
+	ValidationFailedCode Code = "VALIDATION_FAILED"
+	PanicRecoveryCode    Code = "PANIC_RECOVERY"
 )
 
 type Error struct {
@@ -85,11 +86,11 @@ func Stack(err error) CallStack {
 	return nil
 }
 
-// Gets the error code associated with the error. Returns Unknown by default.
+// Gets the error code associated with the error. Returns UnknownCode by default.
 func CodeOrDefault(err error) Code {
 	if withCode, ok := err.(Error); ok {
 		return withCode.code
 	}
 
-	return Unknown
+	return UnknownCode
 }
