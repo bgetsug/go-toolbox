@@ -25,7 +25,7 @@ func WithBucketFlush(watchIndexTimeout time.Duration) *BucketFlush {
 }
 
 func (d *BucketFlush) Before(ctx *test_helpers.Context) {
-	if err := Cb.Bucket.Manager("", "").Flush(); err != nil {
+	if err := Cb.Bucket.Manager(Cb.config.BucketName, Cb.config.BucketPassword).Flush(); err != nil {
 		ctx.MustGet("t").(*testing.T).Fatal(err)
 	}
 
@@ -90,7 +90,7 @@ GetStatus:
 }
 
 func (d *BucketFlush) createIndexes(ctx *test_helpers.Context) {
-	bucketMgr := Cb.Bucket.Manager("", "")
+	bucketMgr := Cb.Bucket.Manager(Cb.config.BucketName, Cb.config.BucketPassword)
 
 	indexes, errs := Cb.CreateIndexes()
 
