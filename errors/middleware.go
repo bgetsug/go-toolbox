@@ -41,7 +41,8 @@ func ErrorResponder() gin.HandlerFunc {
 				})
 			} else if errWithCode, ok := contextError.Err.(Error); ok {
 				errorCollection = append(errorCollection, gin.H{
-					"code": errWithCode.code,
+					"message": errWithCode.message,
+					"code":    errWithCode.code,
 				})
 			} else {
 				errorCollection = append(errorCollection, gin.H{
