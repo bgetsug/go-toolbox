@@ -16,19 +16,14 @@ var (
 	Log *zap.SugaredLogger
 )
 
-type Configuration struct {
-	Env   config.Environment
-	Level string
-}
-
-func Init(cfg Configuration) {
+func Init(env config.Environment) {
 	logger, err := zap.NewProduction()
 
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	if cfg.Env == config.LOCAL || cfg.Env == config.TESTING {
+	if env == config.LOCAL || env == config.TESTING {
 		logger, err = zap.NewDevelopment()
 
 		if err != nil {
