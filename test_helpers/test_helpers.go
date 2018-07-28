@@ -7,7 +7,9 @@ import (
 )
 
 func Main(m *testing.M, suiteName string, initFunc func()) {
-	initFunc()
+	if initFunc != nil {
+		initFunc()
+	}
 
 	exit := m.Run()
 
