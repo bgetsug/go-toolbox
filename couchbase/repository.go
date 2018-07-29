@@ -6,12 +6,11 @@ import (
 )
 
 type Repository struct {
-	Cb          *Couchbase
 	BucketIdent *nqb.Expression
 }
 
 func (r Repository) ExecuteN1qlAndLog(q *gocb.N1qlQuery, params interface{}) (gocb.QueryResults, error) {
-	rows, err := r.Cb.ExecuteN1qlQuery(q, params)
+	rows, err := Cb.ExecuteN1qlQuery(q, params)
 
 	if err != nil {
 		log.With("error", err).Errorf("Bad N1QL Query: %v, Params: %+v", q, params)
