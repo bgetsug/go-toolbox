@@ -1,6 +1,7 @@
 package couchbase
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 
@@ -113,9 +114,9 @@ func (c *Couchbase) createIndex(index *Index, node string, numReplicas int, igno
 		qs += " WHERE " + index.Where
 	}
 
-	qs += " USING GSI WITH {\"num_replica\":$1}"
+	qs += " USING GSI WITH {\"num_replica\": " + fmt.Sprintf("%d", numReplicas) + "}"
 
-	rows, err := c.Bucket.ExecuteN1qlQuery(gocb.NewN1qlQuery(qs), []interface{}{numReplicas})
+	rows, err := c.Bucket.ExecuteN1qlQuery(gocb.NewN1qlQuery(qs), nil)
 
 	if err != nil {
 		if strings.Contains(err.Error(), "already exist") {
