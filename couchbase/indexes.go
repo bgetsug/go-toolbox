@@ -2,6 +2,7 @@ package couchbase
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/bgetsug/go-toolbox/errors"
@@ -18,10 +19,22 @@ var (
 )
 
 var IndexCmd = &cobra.Command{
-	Use:   "index",
+	Use:   "index [<num replicas>]",
 	Short: "Add indexes to registered database(s)",
 	Run: func(cmd *cobra.Command, args []string) {
-		Cb.CreateIndexes()
+		numReplicas := 1
+
+		if len(args) == 1 {
+			nr, err := strconv.Atoi(args[0])
+
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			numReplicas = nr
+		}
+
+		Cb.CreateIndexes(numReplicas)
 	},
 }
 
@@ -37,8 +50,30 @@ func (c *Couchbase) RegisterIndexes(indexes []*Index) {
 }
 
 // Create all registered indexes that do not already exist
-func (c *Couchbase) CreateIndexes() ([]gocb.IndexInfo, []error) {
-	indexErrors := c.createIndexesOnAllHosts()
+func (c *Couchbase) CreateIndexes(numReplicas int) ([]gocb.IndexInfo, []error) {
+	if numReplicas == 0 {
+		numReplicas = 1
+	}
+
+	hosts := strings.Split(c.config.Hosts, ",")
+
+	var indexErrors []error
+
+	if len(c.indexes) == 0 {
+		noIndexes := errorNoRegisteredIndexes
+		indexerLog.With(noIndexes)
+		indexErrors = append(indexErrors, noIndexes)
+	}
+
+	for _, index := range c.indexes {
+
+		err := c.createIndex(index, hosts[0], numReplicas, true)
+
+		if err != nil {
+			indexerLog.With("error", pkgerr.WithStack(err)).Error()
+			indexErrors = append(indexErrors, err)
+		}
+	}
 
 	indexes, err := c.Bucket.Manager(Cb.config.BucketName, Cb.config.BucketPassword).GetIndexes()
 
@@ -53,43 +88,13 @@ func (c *Couchbase) CreateIndexes() ([]gocb.IndexInfo, []error) {
 	return indexes, indexErrors
 }
 
-func (c *Couchbase) createIndexesOnAllHosts() []error {
-	hosts := strings.Split(c.config.Hosts, ",")
-
-	var indexErrors []error
-
-	if len(c.indexes) == 0 {
-		noIndexes := errorNoRegisteredIndexes
-		indexerLog.With(noIndexes)
-		indexErrors = append(indexErrors, noIndexes)
-	}
-
-	for _, index := range c.indexes {
-		for _, host := range hosts {
-			host = host + ":8091"
-
-			err := c.createIndex(index, host, true)
-
-			if err != nil {
-				indexerLog.With("error", pkgerr.WithStack(err)).Error()
-				indexErrors = append(indexErrors, err)
-			}
-		}
-	}
-
-	return indexErrors
-}
-
-func (c *Couchbase) createIndex(index *Index, node string, ignoreIfExists bool) error {
-	nodeParts := strings.Split(strings.Split(node, ":")[0], ".")
-	name := fmt.Sprintf("%s_%s", index.Name, nodeParts[0])
-
+func (c *Couchbase) createIndex(index *Index, node string, numReplicas int, ignoreIfExists bool) error {
 	var qs string
 
 	qs += "CREATE INDEX"
 
-	if name != "" {
-		qs += " `" + name + "`"
+	if index.Name != "" {
+		qs += " `" + index.Name + "`"
 	}
 
 	qs += " ON `" + c.config.BucketName + "`"
@@ -109,14 +114,14 @@ func (c *Couchbase) createIndex(index *Index, node string, ignoreIfExists bool) 
 		qs += " WHERE " + index.Where
 	}
 
-	qs += " USING GSI WITH {\"nodes\":[\"" + node + "\"]}"
+	qs += " USING GSI WITH {\"num_replica\":[\"" + fmt.Sprintf("%d", numReplicas) + "\"]}"
 
 	rows, err := c.Bucket.ExecuteN1qlQuery(gocb.NewN1qlQuery(qs), nil)
 
 	if err != nil {
 		if strings.Contains(err.Error(), "already exist") {
 			if ignoreIfExists {
-				indexerLog.Infof("Index '%s' already exists...skipping creation", name)
+				indexerLog.Infof("Index '%s' already exists...skipping creation", index.Name)
 				return nil
 			}
 			return gocb.ErrIndexAlreadyExists
