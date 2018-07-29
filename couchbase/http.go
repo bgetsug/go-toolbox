@@ -2,6 +2,7 @@ package couchbase
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/fatih/structs"
 	"github.com/gin-gonic/gin"
@@ -15,7 +16,19 @@ func RegisterCbBootstrapRoutes(router *gin.Engine, accounts gin.Accounts) {
 			var indexCollection []interface{}
 			var indexErrors []interface{}
 
-			indexes, errors := Cb.CreateIndexes()
+			replicas := 1
+
+			if r, ok := c.GetQuery("replicas"); ok {
+				r, err := strconv.Atoi(r)
+
+				if err != nil {
+					c.AbortWithError(http.StatusBadRequest, err)
+				}
+
+				replicas = r
+			}
+
+			indexes, errors := Cb.CreateIndexes(replicas)
 			indexCollection = append(indexCollection, indexes)
 
 			for _, err := range errors {
