@@ -12,6 +12,9 @@ import (
 	"gopkg.in/gavv/httpexpect.v1"
 )
 
+const UnitSuite = "unit"
+const IntegrationSuite = "integration"
+
 var (
 	SuiteLog bytes.Buffer
 )
