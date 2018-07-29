@@ -24,6 +24,7 @@ type Decorator interface {
 
 // WithDecorators should be used to wrap a test function (f) with the desired decorators. Decorator Before and After
 // methods will execute sequentially, before and after the test function (f), respectively.
+// DEPRECATED: Use WithHelper instead
 func WithDecorators(t *testing.T, decorators []Decorator, f func(ctx *Context)) {
 	ctx := &Context{
 		Props: map[string]interface{}{
@@ -38,6 +39,40 @@ func WithDecorators(t *testing.T, decorators []Decorator, f func(ctx *Context)) 
 	f(ctx) // test runs here
 
 	for _, dec := range decorators {
+		dec.After(ctx)
+	}
+}
+
+type Helper struct {
+	T          *testing.T
+	SuiteName  string
+	Decorators []Decorator
+}
+
+func WithHelper(t *testing.T, suiteName string) *Helper {
+	return &Helper{T: t, SuiteName: suiteName}
+}
+
+func (h *Helper) UseDecorators(decorators ...Decorator) *Helper {
+	h.Decorators = decorators
+
+	return h
+}
+
+func (h *Helper) Run(f func(ctx *Context)) {
+	ctx := &Context{
+		Props: map[string]interface{}{
+			"t": h.T,
+		},
+	}
+
+	for _, dec := range h.Decorators {
+		dec.Before(ctx)
+	}
+
+	f(ctx) // test runs here
+
+	for _, dec := range h.Decorators {
 		dec.After(ctx)
 	}
 }
