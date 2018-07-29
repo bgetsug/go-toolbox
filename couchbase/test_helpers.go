@@ -93,7 +93,7 @@ GetStatus:
 func (d *BucketFlush) createIndexes(ctx *test_helpers.Context) {
 	bucketMgr := Cb.Bucket.Manager(Cb.config.BucketName, Cb.config.BucketPassword)
 
-	indexes, errs := Cb.CreateIndexes(1)
+	indexes, errs := Cb.CreateIndexes(0)
 
 	if len(errs) > 0 {
 		ctx.MustGet("t").(*testing.T).Fatal(errs)
